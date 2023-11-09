@@ -1,0 +1,422 @@
+package com.example.testPDF;
+
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.BaseFont;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
+import com.itextpdf.text.pdf.PdfWriter;
+import org.springframework.core.io.ClassPathResource;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Objects;
+
+public class HalfYearlyAccBlncStatementGenerator {
+
+    private BaseFont boldBaseFont;
+    private BaseFont baseFont;
+    private Font font;
+    private Font boldFont;
+
+    private Font fontSmall;
+    private Font boldFontSmall;
+    private Font boldFontUnderLiner;
+
+    private HalfYearlyAccBalanceStatement statement;
+
+    private boolean passwordProtectionEnabled;
+    private String targetFilePath;
+
+    public HalfYearlyAccBlncStatementGenerator(HalfYearlyAccBalanceStatement statement, String targetFilePath, boolean passwordProtectionEnabled) throws IOException, DocumentException {
+        this.baseFont = BaseFont.createFont(new ClassPathResource("fonts/RobotoCondensed-Regular.ttf").getPath(), BaseFont.IDENTITY_H, true);
+        this.boldBaseFont = BaseFont.createFont(new ClassPathResource("fonts/RobotoCondensed-Bold.ttf").getPath(), BaseFont.IDENTITY_H, true);
+
+        this.font = new Font(baseFont, 10);
+        this.boldFont = new Font(boldBaseFont, 10);
+        this.fontSmall = new Font(baseFont, 9);
+        this.boldFontSmall = new Font(boldBaseFont, 9);
+        this.boldFontUnderLiner = new Font(boldBaseFont, 11, Font.UNDERLINE);
+
+        this.statement = statement;
+        this.targetFilePath = targetFilePath;
+        this.passwordProtectionEnabled = passwordProtectionEnabled;
+    }
+
+    public File generatePdf() throws DocumentException, IOException {
+        Document document = new Document(PageSize.A4);
+        File stFile = new File(targetFilePath);
+        stFile.getParentFile().mkdirs();
+
+        PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(stFile));
+
+        document.setMargins(36, 36, 195, 115);
+
+        if (passwordProtectionEnabled) encryptFile(writer);
+
+        BcCertificateEvent event = new BcCertificateEvent(statement);
+        writer.setPageEvent(event);
+
+        document.open();
+
+        Paragraph statementSummaryTitle = new Paragraph("STATEMENT SUMMARY",boldFont);
+        statementSummaryTitle.setAlignment(Element.ALIGN_LEFT);
+        statementSummaryTitle.setSpacingBefore(20f);
+        document.add(statementSummaryTitle);
+
+        PdfPTable statementSummary = getStatementSummary();
+        statementSummary.setSpacingBefore(10f);
+        statementSummary.setSpacingAfter(20f);
+        document.add(statementSummary);
+
+        Paragraph statementTitle = new Paragraph("TRANSACTIONS OF 01-Jan-2023 TO 31-Jan-2023",boldFont);
+        statementTitle.setAlignment(Element.ALIGN_LEFT);
+        statementTitle.setSpacingBefore(20f);
+        document.add(statementTitle);
+
+        PdfPTable pdfPTable = new PdfPTable(4);
+        pdfPTable.setWidths(new int[]{25, 40, 10, 25});
+        pdfPTable.setWidthPercentage(100);
+        Paragraph paragraph = new Paragraph("Account Number", boldFont);
+        PdfPCell pdfPCell = new PdfPCell(paragraph);
+        pdfPCell.setUseAscender(true);
+        pdfPCell.setFixedHeight(18f);
+        pdfPCell.setPadding(5f);
+        pdfPCell.setBackgroundColor(BaseColor.LIGHT_GRAY);
+        pdfPCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        pdfPCell.setVerticalAlignment(Element.ALIGN_CENTER);
+        pdfPTable.addCell(pdfPCell);
+
+        paragraph = new Paragraph("Account Type", boldFont);
+        pdfPCell = new PdfPCell(paragraph);
+        pdfPCell.setUseAscender(true);
+        pdfPCell.setFixedHeight(18f);
+        pdfPCell.setBackgroundColor(BaseColor.LIGHT_GRAY);
+        pdfPCell.setPadding(5f);
+        pdfPCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        pdfPTable.addCell(pdfPCell);
+        paragraph = new Paragraph("Currency", boldFont);
+        pdfPCell = new PdfPCell(paragraph);
+        pdfPCell.setUseAscender(true);
+        pdfPCell.setFixedHeight(18f);
+        pdfPCell.setPadding(5f);
+        pdfPCell.setBackgroundColor(BaseColor.LIGHT_GRAY);
+        pdfPCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        pdfPTable.addCell(pdfPCell);
+
+        paragraph = new Paragraph("Balance", boldFont);
+        pdfPCell = new PdfPCell(paragraph);
+        pdfPCell.setUseAscender(true);
+        pdfPCell.setBackgroundColor(BaseColor.LIGHT_GRAY);
+        pdfPCell.setFixedHeight(18f);
+        pdfPCell.setPadding(5f);
+        pdfPCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        pdfPTable.addCell(pdfPCell);
+
+        for (int i = 0; i <40 ; i++){
+            paragraph = new Paragraph(statement.accountNumber, font);
+            pdfPCell = new PdfPCell(paragraph);
+            pdfPCell.setUseAscender(true);
+            pdfPCell.setFixedHeight(18f);
+            pdfPCell.setPadding(5f);
+            pdfPCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            pdfPTable.addCell(pdfPCell);
+
+            paragraph = new Paragraph(statement.schemeType, font);
+            pdfPCell = new PdfPCell(paragraph);
+            pdfPCell.setUseAscender(true);
+            pdfPCell.setFixedHeight(18f);
+            pdfPCell.setPadding(5f);
+            pdfPCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            pdfPTable.addCell(pdfPCell);
+
+            paragraph = new Paragraph(statement.accountCurrencyCode, font);
+            pdfPCell = new PdfPCell(paragraph);
+            pdfPCell.setUseAscender(true);
+            pdfPCell.setFixedHeight(18f);
+            pdfPCell.setPadding(5f);
+            pdfPCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            pdfPTable.addCell(pdfPCell);
+
+            String commaSeperatedBalance = StatementUtil.commaSeparatedAmount(this.statement.balanceAsOnDate);
+            paragraph = new Paragraph(Objects.equals(statement.getBalanceIndicator(), "CREDIT") ? "(+) " + commaSeperatedBalance : "(-) " + commaSeperatedBalance, font);
+
+            pdfPCell = new PdfPCell(paragraph);
+            pdfPCell.setUseAscender(true);
+            pdfPCell.setFixedHeight(18f);
+            pdfPCell.setPadding(5f);
+            pdfPCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            pdfPTable.addCell(pdfPCell);
+        }
+
+        document.add(pdfPTable);
+
+
+        Paragraph rewardPointSummaryTitle = new Paragraph("Reward Point Summary",boldFont);
+        rewardPointSummaryTitle.setAlignment(Element.ALIGN_LEFT);
+        rewardPointSummaryTitle.setSpacingBefore(20f);
+        document.add(rewardPointSummaryTitle);
+
+        PdfPTable rewardPointSummery = this.getRewardPointSummery();
+        document.add(rewardPointSummery);
+
+
+        PdfPTable footer = new PdfPTable(1);
+        footer.setWidths(new int[]{100});
+        footer.setTotalWidth(527);
+        footer.setLockedWidth(true);
+        footer.getDefaultCell().setFixedHeight(40);
+
+        PdfPCell pdfPCell0 = new PdfPCell();
+        pdfPCell0.setPaddingTop(10f); // Space before the cell
+        pdfPCell0.setPaddingBottom(15f);
+
+        paragraph = new Paragraph("THANK YOU FOR BANKING WITH BRAC BANK LIMITED.", boldFont);
+        paragraph.setAlignment(Element.ALIGN_CENTER);
+
+        pdfPCell0.addElement(paragraph);
+
+        paragraph = new Paragraph("THIS IS A COMPUTER-GENERATED STATEMENT AND DOES NOT REQUIRE ANY SIGNATURE.", boldFont);
+        paragraph.setAlignment(Element.ALIGN_CENTER);
+        pdfPCell0.addElement(paragraph);
+
+        paragraph = new Paragraph("**** END OF STATEMENT ****", boldFont);
+        paragraph.setAlignment(Element.ALIGN_CENTER);
+        pdfPCell0.addElement(paragraph);
+
+        pdfPCell0.setBorder(Rectangle.BOX); // Set the border to a black box around the cell
+        pdfPCell0.setBorderColor(BaseColor.BLACK); // Set the border color to black
+        pdfPCell0.setBorderWidth(1f); // Set the border width
+
+        footer.addCell(pdfPCell0);
+
+
+        //empty cell
+        PdfPCell emptyPCell1 = new PdfPCell();
+        emptyPCell1.setBorder(Rectangle.NO_BORDER);
+        paragraph = new Paragraph("\n\n");
+        emptyPCell1.addElement(paragraph);
+        footer.addCell(emptyPCell1);
+
+
+
+        PdfPCell pdfPCell1 = new PdfPCell();
+        pdfPCell1.setPadding(10f); // Space before the cell
+        // Creating the first paragraph
+        paragraph = new Paragraph("You can purchase or transfer money through online/e-commerce by using your BRAC Bank card where card number, expiry date, three-digit CVV number and OTP received through SMS are required. Card PIN is not required to make online/ecommerce transaction.", font);
+        paragraph.setSpacingBefore(10f);
+        paragraph.setSpacingAfter(10f);
+        paragraph.setAlignment(Element.ALIGN_JUSTIFIED);
+        pdfPCell1.addElement(paragraph);
+        // Creating the second paragraph
+        paragraph = new Paragraph("For your convenience, local online gateway is always open. Please do not share card information (card number, card expiry date, CVV number, OTP, and PIN) to anybody, not even with bank official or call center agent.", font);
+        paragraph.setAlignment(Element.ALIGN_JUSTIFIED);
+        paragraph.setSpacingBefore(10f);
+        paragraph.setSpacingAfter(10f);
+        pdfPCell1.addElement(paragraph);
+        // Set the border color and width for the cell
+        pdfPCell1.setBorder(Rectangle.BOX); // Set the border to a black box around the cell
+        pdfPCell1.setBorderColor(BaseColor.BLACK); // Set the border color to black
+        pdfPCell1.setBorderWidth(1f); // Set the border width
+
+        footer.addCell(pdfPCell1);
+
+        //empty cell
+        PdfPCell emptyPCell2 = new PdfPCell();
+        emptyPCell2.setBorder(Rectangle.NO_BORDER);
+        paragraph = new Paragraph("\n\n");
+        emptyPCell2.addElement(paragraph);
+        footer.addCell(emptyPCell2);
+
+        document.add(footer);
+
+        document.close();
+
+        stFile.setReadable(true);
+        stFile.setExecutable(false);
+
+        return stFile;
+    }
+
+    private static String formatDate(LocalDate date) {
+        if (date != null) {
+            DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd MMM, yyyy");
+            return dateTimeFormatter.format(date);
+        }
+        return null;
+    }
+
+    private PdfPTable getRewardPointSummery(){
+        PdfPTable table = new PdfPTable(3);
+        table.setWidthPercentage(100);
+        table.setWidths(new int[]{100});
+        table.setTotalWidth(527);
+        table.setLockedWidth(true);
+
+        PdfPCell cell = new PdfPCell();
+
+        cell.setPadding(6);
+        cell.setBackgroundColor(BaseColor.LIGHT_GRAY);
+        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
+        cell.setVerticalAlignment(Element.ALIGN_TOP);
+        cell.setBorderWidth(1);
+
+        cell.setPhrase(new Phrase("Reward Point for Ace No", font));
+        table.addCell(cell);
+
+        cell.setPhrase(new Phrase(":", font));
+        table.addCell(cell);
+
+        cell.setBackgroundColor(BaseColor.WHITE);
+        cell.setPhrase(new Phrase("1501104881404001", font));
+        table.addCell(cell);
+
+        cell.setBackgroundColor(BaseColor.LIGHT_GRAY);
+        cell.setPhrase(new Phrase("Reward Points Earned in June 23", font));
+        table.addCell(cell);
+
+        cell.setPhrase(new Phrase(":", font));
+        table.addCell(cell);
+
+        cell.setBackgroundColor(BaseColor.WHITE);
+        cell.setPhrase(new Phrase("10", font));
+        table.addCell(cell);
+
+        cell.setBackgroundColor(BaseColor.LIGHT_GRAY);
+        cell.setPhrase(new Phrase("Reward Points Redeemed in June 23", font));
+        table.addCell(cell);
+
+        cell.setPhrase(new Phrase(":", font));
+        table.addCell(cell);
+
+        cell.setBackgroundColor(BaseColor.WHITE);
+        cell.setPhrase(new Phrase("0", font));
+        table.addCell(cell);
+
+        cell.setBackgroundColor(BaseColor.LIGHT_GRAY);
+        cell.setPhrase(new Phrase("Reward Points Expired in June 23", font));
+        table.addCell(cell);
+
+        cell.setPhrase(new Phrase(":", font));
+        table.addCell(cell);
+
+        cell.setBackgroundColor(BaseColor.WHITE);
+        cell.setPhrase(new Phrase("75", font));
+        table.addCell(cell);
+
+        cell.setBackgroundColor(BaseColor.LIGHT_GRAY);
+        cell.setPhrase(new Phrase("Reward Points Available", font));
+        table.addCell(cell);
+
+        cell.setPhrase(new Phrase(":", font));
+        table.addCell(cell);
+
+        cell.setBackgroundColor(BaseColor.WHITE);
+        cell.setPhrase(new Phrase("674", font));
+        table.addCell(cell);
+        return table;
+    }
+
+    private PdfPTable getStatementSummary(){
+
+        PdfPTable statementSummaryTable = new PdfPTable(4);
+        statementSummaryTable.getDefaultCell().setBorder(0);
+        statementSummaryTable.setWidthPercentage(100);
+
+        PdfPCell cell1 = new PdfPCell(new Paragraph("CUSTOMER ID" ,boldFontSmall));
+        applyStatementSummaryCellStyle(cell1);
+        cell1.setBackgroundColor(new BaseColor(242, 242, 242));
+        statementSummaryTable.addCell(cell1);
+
+        cell1 = new PdfPCell(new Paragraph("04881404",fontSmall));
+        applyStatementSummaryCellStyle(cell1);
+        statementSummaryTable.addCell(cell1);
+
+        cell1 = new PdfPCell(new Paragraph("STATEMENT PERIOD",boldFontSmall));
+        applyStatementSummaryCellStyle(cell1);
+        cell1.setBackgroundColor(new BaseColor(242, 242, 242));
+        statementSummaryTable.addCell(cell1);
+
+        cell1 = new PdfPCell(new Paragraph("29-Dec-2018 TO 12-Jan-2019",fontSmall));
+        applyStatementSummaryCellStyle(cell1);
+        cell1.setHorizontalAlignment(PdfPCell.ALIGN_RIGHT);
+        statementSummaryTable.addCell(cell1);
+
+        cell1 = new PdfPCell(new Paragraph("CUSTOMER ID",boldFontSmall));
+        applyStatementSummaryCellStyle(cell1);
+        cell1.setBackgroundColor(new BaseColor(242, 242, 242));
+        statementSummaryTable.addCell(cell1);
+
+        cell1 = new PdfPCell(new Paragraph("04881404",fontSmall));
+        applyStatementSummaryCellStyle(cell1);
+        statementSummaryTable.addCell(cell1);
+
+        cell1 = new PdfPCell(new Paragraph("STATEMENT PERIOD",boldFontSmall));
+        applyStatementSummaryCellStyle(cell1);
+        cell1.setBackgroundColor(new BaseColor(242, 242, 242));
+        statementSummaryTable.addCell(cell1);
+
+        cell1 = new PdfPCell(new Paragraph("29-Dec-2018 TO 12-Jan-2019",fontSmall));
+        applyStatementSummaryCellStyle(cell1);
+        cell1.setHorizontalAlignment(PdfPCell.ALIGN_RIGHT);
+        statementSummaryTable.addCell(cell1);
+
+        cell1 = new PdfPCell(new Paragraph("CUSTOMER ID",boldFontSmall));
+        applyStatementSummaryCellStyle(cell1);
+        cell1.setBackgroundColor(new BaseColor(242, 242, 242));
+        statementSummaryTable.addCell(cell1);
+
+        cell1 = new PdfPCell(new Paragraph("04881404",fontSmall));
+        applyStatementSummaryCellStyle(cell1);
+        statementSummaryTable.addCell(cell1);
+
+        cell1 = new PdfPCell(new Paragraph("STATEMENT PERIOD",boldFontSmall));
+        applyStatementSummaryCellStyle(cell1);
+        cell1.setBackgroundColor(new BaseColor(242, 242, 242));
+        statementSummaryTable.addCell(cell1);
+
+        cell1 = new PdfPCell(new Paragraph("29-Dec-2018 TO 12-Jan-2019",fontSmall));
+        applyStatementSummaryCellStyle(cell1);
+        cell1.setHorizontalAlignment(PdfPCell.ALIGN_RIGHT);
+        statementSummaryTable.addCell(cell1);
+
+        cell1 = new PdfPCell(new Paragraph("CUSTOMER ID",boldFontSmall));
+        applyStatementSummaryCellStyle(cell1);
+        cell1.setBackgroundColor(new BaseColor(242, 242, 242));
+        statementSummaryTable.addCell(cell1);
+
+        cell1 = new PdfPCell(new Paragraph("04881404",fontSmall));
+        applyStatementSummaryCellStyle(cell1);
+        statementSummaryTable.addCell(cell1);
+
+        cell1 = new PdfPCell(new Paragraph("STATEMENT PERIOD",boldFontSmall));
+        applyStatementSummaryCellStyle(cell1);
+        cell1.setBackgroundColor(new BaseColor(242, 242, 242));
+        statementSummaryTable.addCell(cell1);
+
+        cell1 = new PdfPCell(new Paragraph("29-Dec-2018 TO 12-Jan-2019",fontSmall));
+        applyStatementSummaryCellStyle(cell1);
+        cell1.setHorizontalAlignment(PdfPCell.ALIGN_RIGHT);
+        statementSummaryTable.addCell(cell1);
+        return statementSummaryTable;
+    }
+
+    private static void applyStatementSummaryCellStyle(PdfPCell cell) {
+        cell.setBorder(15);
+        cell.setBorderColor(new BaseColor(166, 166, 166));
+        cell.setPaddingLeft(5.03f);
+        cell.setPaddingRight(5.03f);
+        cell.setPaddingTop(5.03f);
+        cell.setBottom(6.03f);
+        cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        
+    }
+
+
+
+    private void encryptFile(PdfWriter writer) throws DocumentException {
+        writer.setEncryption(statement.accountNumber.getBytes(), statement.accountNumber.getBytes(), PdfWriter.ALLOW_PRINTING, PdfWriter.ENCRYPTION_AES_128 | PdfWriter.DO_NOT_ENCRYPT_METADATA);
+    }
+}
