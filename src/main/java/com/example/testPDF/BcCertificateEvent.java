@@ -57,7 +57,7 @@ public class BcCertificateEvent extends PdfPageEventHelper {
 
     @Override
     public void onEndPage(PdfWriter writer, Document document) {
-        document.setMargins(36, 36, 80, 115);
+        document.setMargins(36, 36, 80, 80);
         addHeader(writer);
         if(!isHardcopyRequired) addFooter(writer);
     }
@@ -149,10 +149,6 @@ public class BcCertificateEvent extends PdfPageEventHelper {
             footer.setLockedWidth(true);
             footer.getDefaultCell().setFixedHeight(40);
 
-//            if(writer.getCurrentPageNumber() > 1){
-//
-//            }
-
             // Second Cell
             PdfPCell pdfPCell2 = new PdfPCell();
             pdfPCell2.setBorder(Rectangle.TOP);
@@ -160,7 +156,7 @@ public class BcCertificateEvent extends PdfPageEventHelper {
             pdfPCell2.setPaddingTop(10f); // Space before the cell
             pdfPCell2.setPaddingBottom(10f);
 
-            String pageString = "Page " + writer.getCurrentPageNumber() + " of 1";
+            String pageString = "Page: " + writer.getCurrentPageNumber();
 
             Paragraph paragraph2 = new Paragraph(pageString);
             paragraph2.setAlignment(Element.ALIGN_RIGHT);
@@ -171,14 +167,7 @@ public class BcCertificateEvent extends PdfPageEventHelper {
             PdfContentByte canvas = writer.getDirectContent();
             canvas.beginMarkedContentSequence(PdfName.ARTIFACT);
 
-//            if(writer.getCurrentPageNumber() > 1){
-//                footer.writeSelectedRows(0, -1, 34, 310, canvas);
-//            }
-//            else {
-//
-//            }
-
-            footer.writeSelectedRows(0, -1, 34, 110, canvas);
+            footer.writeSelectedRows(0, -1, 34, 75, canvas);
 
             canvas.endMarkedContentSequence();
         } catch (DocumentException documentException) {
@@ -186,12 +175,12 @@ public class BcCertificateEvent extends PdfPageEventHelper {
         }
     }
 
-    @Override
-    public void onCloseDocument(PdfWriter writer, Document document) {
-        int totalLength = String.valueOf(writer.getPageNumber()).length();
-        int totalWidth = totalLength * 5;
-        ColumnText.showTextAligned(t, Element.ALIGN_RIGHT, new Phrase(String.valueOf(writer.getPageNumber()), new Font(Font.FontFamily.HELVETICA, 8)), totalWidth, 6, 0);
-    }
+//    @Override
+//    public void onCloseDocument(PdfWriter writer, Document document) {
+//        int totalLength = String.valueOf(writer.getPageNumber()).length();
+//        int totalWidth = totalLength * 5;
+//        ColumnText.showTextAligned(t, Element.ALIGN_RIGHT, new Phrase(String.valueOf(writer.getPageNumber()), new Font(Font.FontFamily.HELVETICA, 8)), totalWidth, 6, 0);
+//    }
 
     private String getRefNumber(String cif) {
         String refNumber = "BBL-LOCHY-" + new SimpleDateFormat("yyddMM").format(Calendar.getInstance().getTime()) + "-"

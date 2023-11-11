@@ -31,6 +31,13 @@ public class HalfYearlyAccBlncStatementGenerator {
     private String targetFilePath;
 
     public HalfYearlyAccBlncStatementGenerator(HalfYearlyAccBalanceStatement statement, String targetFilePath, boolean passwordProtectionEnabled) throws IOException, DocumentException {
+        this.initializeFonts();
+        this.statement = statement;
+        this.targetFilePath = targetFilePath;
+        this.passwordProtectionEnabled = passwordProtectionEnabled;
+    }
+
+    private void initializeFonts() throws IOException, DocumentException {
         this.baseFont = BaseFont.createFont(new ClassPathResource("fonts/RobotoCondensed-Regular.ttf").getPath(), BaseFont.IDENTITY_H, true);
         this.boldBaseFont = BaseFont.createFont(new ClassPathResource("fonts/RobotoCondensed-Bold.ttf").getPath(), BaseFont.IDENTITY_H, true);
 
@@ -39,10 +46,6 @@ public class HalfYearlyAccBlncStatementGenerator {
         this.fontSmall = new Font(baseFont, 9);
         this.boldFontSmall = new Font(boldBaseFont, 9);
         this.boldFontUnderLiner = new Font(boldBaseFont, 11, Font.UNDERLINE);
-
-        this.statement = statement;
-        this.targetFilePath = targetFilePath;
-        this.passwordProtectionEnabled = passwordProtectionEnabled;
     }
 
     public File generatePdf() throws DocumentException, IOException {
@@ -52,7 +55,7 @@ public class HalfYearlyAccBlncStatementGenerator {
 
         PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(stFile));
 
-        document.setMargins(36, 36, 195, 115);
+        document.setMargins(36, 36, 195, 80);
 
         if (passwordProtectionEnabled) encryptFile(writer);
 
@@ -76,161 +79,26 @@ public class HalfYearlyAccBlncStatementGenerator {
         statementTitle.setSpacingBefore(20f);
         document.add(statementTitle);
 
-        PdfPTable pdfPTable = new PdfPTable(4);
-        pdfPTable.setWidths(new int[]{25, 40, 10, 25});
-        pdfPTable.setWidthPercentage(100);
-        Paragraph paragraph = new Paragraph("Account Number", boldFont);
-        PdfPCell pdfPCell = new PdfPCell(paragraph);
-        pdfPCell.setUseAscender(true);
-        pdfPCell.setFixedHeight(18f);
-        pdfPCell.setPadding(5f);
-        pdfPCell.setBackgroundColor(BaseColor.LIGHT_GRAY);
-        pdfPCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-        pdfPCell.setVerticalAlignment(Element.ALIGN_CENTER);
-        pdfPTable.addCell(pdfPCell);
-
-        paragraph = new Paragraph("Account Type", boldFont);
-        pdfPCell = new PdfPCell(paragraph);
-        pdfPCell.setUseAscender(true);
-        pdfPCell.setFixedHeight(18f);
-        pdfPCell.setBackgroundColor(BaseColor.LIGHT_GRAY);
-        pdfPCell.setPadding(5f);
-        pdfPCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-        pdfPTable.addCell(pdfPCell);
-        paragraph = new Paragraph("Currency", boldFont);
-        pdfPCell = new PdfPCell(paragraph);
-        pdfPCell.setUseAscender(true);
-        pdfPCell.setFixedHeight(18f);
-        pdfPCell.setPadding(5f);
-        pdfPCell.setBackgroundColor(BaseColor.LIGHT_GRAY);
-        pdfPCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-        pdfPTable.addCell(pdfPCell);
-
-        paragraph = new Paragraph("Balance", boldFont);
-        pdfPCell = new PdfPCell(paragraph);
-        pdfPCell.setUseAscender(true);
-        pdfPCell.setBackgroundColor(BaseColor.LIGHT_GRAY);
-        pdfPCell.setFixedHeight(18f);
-        pdfPCell.setPadding(5f);
-        pdfPCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-        pdfPTable.addCell(pdfPCell);
-
-        for (int i = 0; i <40 ; i++){
-            paragraph = new Paragraph(statement.accountNumber, font);
-            pdfPCell = new PdfPCell(paragraph);
-            pdfPCell.setUseAscender(true);
-            pdfPCell.setFixedHeight(18f);
-            pdfPCell.setPadding(5f);
-            pdfPCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-            pdfPTable.addCell(pdfPCell);
-
-            paragraph = new Paragraph(statement.schemeType, font);
-            pdfPCell = new PdfPCell(paragraph);
-            pdfPCell.setUseAscender(true);
-            pdfPCell.setFixedHeight(18f);
-            pdfPCell.setPadding(5f);
-            pdfPCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-            pdfPTable.addCell(pdfPCell);
-
-            paragraph = new Paragraph(statement.accountCurrencyCode, font);
-            pdfPCell = new PdfPCell(paragraph);
-            pdfPCell.setUseAscender(true);
-            pdfPCell.setFixedHeight(18f);
-            pdfPCell.setPadding(5f);
-            pdfPCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-            pdfPTable.addCell(pdfPCell);
-
-            String commaSeperatedBalance = StatementUtil.commaSeparatedAmount(this.statement.balanceAsOnDate);
-            paragraph = new Paragraph(Objects.equals(statement.getBalanceIndicator(), "CREDIT") ? "(+) " + commaSeperatedBalance : "(-) " + commaSeperatedBalance, font);
-
-            pdfPCell = new PdfPCell(paragraph);
-            pdfPCell.setUseAscender(true);
-            pdfPCell.setFixedHeight(18f);
-            pdfPCell.setPadding(5f);
-            pdfPCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-            pdfPTable.addCell(pdfPCell);
-        }
-
-        document.add(pdfPTable);
-
-
-        Paragraph rewardPointSummaryTitle = new Paragraph("Reward Point Summary",boldFont);
-        rewardPointSummaryTitle.setAlignment(Element.ALIGN_LEFT);
-        rewardPointSummaryTitle.setSpacingBefore(20f);
-        document.add(rewardPointSummaryTitle);
+        PdfPTable statementList = this.getStatementList();
+        statementList.setSpacingBefore(20f);
+        document.add(statementList);
 
         PdfPTable rewardPointSummery = this.getRewardPointSummery();
+        rewardPointSummery.setSpacingAfter(20f);
         document.add(rewardPointSummery);
 
+        PdfPTable cautionSection = this.getCautionSection();
 
-        PdfPTable footer = new PdfPTable(1);
-        footer.setWidths(new int[]{100});
-        footer.setTotalWidth(527);
-        footer.setLockedWidth(true);
-        footer.getDefaultCell().setFixedHeight(40);
+        float remainingSpace = writer.getVerticalPosition(true)-document.bottom(document.bottomMargin());
 
-        PdfPCell pdfPCell0 = new PdfPCell();
-        pdfPCell0.setPaddingTop(10f); // Space before the cell
-        pdfPCell0.setPaddingBottom(15f);
+        if (cautionSection.getTotalHeight() > remainingSpace) {
+            document.newPage();
+        }
 
-        paragraph = new Paragraph("THANK YOU FOR BANKING WITH BRAC BANK LIMITED.", boldFont);
-        paragraph.setAlignment(Element.ALIGN_CENTER);
-
-        pdfPCell0.addElement(paragraph);
-
-        paragraph = new Paragraph("THIS IS A COMPUTER-GENERATED STATEMENT AND DOES NOT REQUIRE ANY SIGNATURE.", boldFont);
-        paragraph.setAlignment(Element.ALIGN_CENTER);
-        pdfPCell0.addElement(paragraph);
-
-        paragraph = new Paragraph("**** END OF STATEMENT ****", boldFont);
-        paragraph.setAlignment(Element.ALIGN_CENTER);
-        pdfPCell0.addElement(paragraph);
-
-        pdfPCell0.setBorder(Rectangle.BOX); // Set the border to a black box around the cell
-        pdfPCell0.setBorderColor(BaseColor.BLACK); // Set the border color to black
-        pdfPCell0.setBorderWidth(1f); // Set the border width
-
-        footer.addCell(pdfPCell0);
-
-
-        //empty cell
-        PdfPCell emptyPCell1 = new PdfPCell();
-        emptyPCell1.setBorder(Rectangle.NO_BORDER);
-        paragraph = new Paragraph("\n\n");
-        emptyPCell1.addElement(paragraph);
-        footer.addCell(emptyPCell1);
-
-
-
-        PdfPCell pdfPCell1 = new PdfPCell();
-        pdfPCell1.setPadding(10f); // Space before the cell
-        // Creating the first paragraph
-        paragraph = new Paragraph("You can purchase or transfer money through online/e-commerce by using your BRAC Bank card where card number, expiry date, three-digit CVV number and OTP received through SMS are required. Card PIN is not required to make online/ecommerce transaction.", font);
-        paragraph.setSpacingBefore(10f);
-        paragraph.setSpacingAfter(10f);
-        paragraph.setAlignment(Element.ALIGN_JUSTIFIED);
-        pdfPCell1.addElement(paragraph);
-        // Creating the second paragraph
-        paragraph = new Paragraph("For your convenience, local online gateway is always open. Please do not share card information (card number, card expiry date, CVV number, OTP, and PIN) to anybody, not even with bank official or call center agent.", font);
-        paragraph.setAlignment(Element.ALIGN_JUSTIFIED);
-        paragraph.setSpacingBefore(10f);
-        paragraph.setSpacingAfter(10f);
-        pdfPCell1.addElement(paragraph);
-        // Set the border color and width for the cell
-        pdfPCell1.setBorder(Rectangle.BOX); // Set the border to a black box around the cell
-        pdfPCell1.setBorderColor(BaseColor.BLACK); // Set the border color to black
-        pdfPCell1.setBorderWidth(1f); // Set the border width
-
-        footer.addCell(pdfPCell1);
-
-        //empty cell
-        PdfPCell emptyPCell2 = new PdfPCell();
-        emptyPCell2.setBorder(Rectangle.NO_BORDER);
-        paragraph = new Paragraph("\n\n");
-        emptyPCell2.addElement(paragraph);
-        footer.addCell(emptyPCell2);
-
-        document.add(footer);
+        cautionSection.writeSelectedRows(0, -1,
+                34,
+                cautionSection.getTotalHeight() + document.bottom(document.bottomMargin()) - 50,
+                writer.getDirectContent());
 
         document.close();
 
@@ -247,76 +115,66 @@ public class HalfYearlyAccBlncStatementGenerator {
         }
         return null;
     }
+    
+    private PdfPTable getStatementList() throws DocumentException {
 
-    private PdfPTable getRewardPointSummery(){
-        PdfPTable table = new PdfPTable(3);
-        table.setWidthPercentage(100);
-        table.setWidths(new int[]{100});
-        table.setTotalWidth(527);
-        table.setLockedWidth(true);
+        PdfPTable pdfPTable = new PdfPTable(4);
+        pdfPTable.setWidths(new int[]{25, 40, 10, 25});
+        pdfPTable.setWidthPercentage(100);
 
-        PdfPCell cell = new PdfPCell();
+        Paragraph paragraph = new Paragraph("Account Number", boldFont);
+        PdfPCell pdfPCell = new PdfPCell(paragraph);
+        pdfPTable.addCell(applyStatementListHeaderStyle(pdfPCell,BaseColor.WHITE,Element.ALIGN_CENTER,Element.ALIGN_CENTER));
 
-        cell.setPadding(6);
-        cell.setBackgroundColor(BaseColor.LIGHT_GRAY);
-        cell.setHorizontalAlignment(Element.ALIGN_LEFT);
-        cell.setVerticalAlignment(Element.ALIGN_TOP);
-        cell.setBorderWidth(1);
+        paragraph = new Paragraph("Account Type", boldFont);
+        pdfPCell = new PdfPCell(paragraph);
+        pdfPTable.addCell(applyStatementListHeaderStyle(pdfPCell,BaseColor.WHITE,Element.ALIGN_CENTER,Element.ALIGN_CENTER));
 
-        cell.setPhrase(new Phrase("Reward Point for Ace No", font));
-        table.addCell(cell);
+        paragraph = new Paragraph("Currency", boldFont);
+        pdfPCell = new PdfPCell(paragraph);
+        pdfPTable.addCell(applyStatementListHeaderStyle(pdfPCell,BaseColor.WHITE,Element.ALIGN_CENTER,Element.ALIGN_CENTER));
 
-        cell.setPhrase(new Phrase(":", font));
-        table.addCell(cell);
+        paragraph = new Paragraph("Balance", boldFont);
+        pdfPCell = new PdfPCell(paragraph);
+        pdfPTable.addCell(applyStatementListHeaderStyle(pdfPCell,BaseColor.WHITE,Element.ALIGN_CENTER,Element.ALIGN_CENTER));
 
-        cell.setBackgroundColor(BaseColor.WHITE);
-        cell.setPhrase(new Phrase("1501104881404001", font));
-        table.addCell(cell);
+        for (int i = 0; i <30 ; i++){
+            BaseColor rowColor = null;
+            if(i%2==0){
+                rowColor = new BaseColor(242, 242, 242);
+            }else {
+                rowColor = BaseColor.WHITE;
+            }
 
-        cell.setBackgroundColor(BaseColor.LIGHT_GRAY);
-        cell.setPhrase(new Phrase("Reward Points Earned in June 23", font));
-        table.addCell(cell);
+            paragraph = new Paragraph(statement.accountNumber, font);
+            pdfPCell = new PdfPCell(paragraph);
+            pdfPTable.addCell(applyStatementListHeaderStyle(pdfPCell,rowColor,Element.ALIGN_CENTER,Element.ALIGN_CENTER));
 
-        cell.setPhrase(new Phrase(":", font));
-        table.addCell(cell);
+            paragraph = new Paragraph(statement.schemeType, font);
+            pdfPCell = new PdfPCell(paragraph);
+            pdfPTable.addCell(applyStatementListHeaderStyle(pdfPCell,rowColor,Element.ALIGN_CENTER,Element.ALIGN_CENTER));
 
-        cell.setBackgroundColor(BaseColor.WHITE);
-        cell.setPhrase(new Phrase("10", font));
-        table.addCell(cell);
+            paragraph = new Paragraph(statement.accountCurrencyCode, font);
+            pdfPCell = new PdfPCell(paragraph);
+            pdfPTable.addCell(applyStatementListHeaderStyle(pdfPCell,rowColor,Element.ALIGN_CENTER,Element.ALIGN_CENTER));
 
-        cell.setBackgroundColor(BaseColor.LIGHT_GRAY);
-        cell.setPhrase(new Phrase("Reward Points Redeemed in June 23", font));
-        table.addCell(cell);
+            String commaSeperatedBalance = StatementUtil.commaSeparatedAmount(this.statement.balanceAsOnDate);
+            paragraph = new Paragraph(Objects.equals(statement.getBalanceIndicator(), "CREDIT") ? "(+) " + commaSeperatedBalance : "(-) " + commaSeperatedBalance, font);
 
-        cell.setPhrase(new Phrase(":", font));
-        table.addCell(cell);
-
-        cell.setBackgroundColor(BaseColor.WHITE);
-        cell.setPhrase(new Phrase("0", font));
-        table.addCell(cell);
-
-        cell.setBackgroundColor(BaseColor.LIGHT_GRAY);
-        cell.setPhrase(new Phrase("Reward Points Expired in June 23", font));
-        table.addCell(cell);
-
-        cell.setPhrase(new Phrase(":", font));
-        table.addCell(cell);
-
-        cell.setBackgroundColor(BaseColor.WHITE);
-        cell.setPhrase(new Phrase("75", font));
-        table.addCell(cell);
-
-        cell.setBackgroundColor(BaseColor.LIGHT_GRAY);
-        cell.setPhrase(new Phrase("Reward Points Available", font));
-        table.addCell(cell);
-
-        cell.setPhrase(new Phrase(":", font));
-        table.addCell(cell);
-
-        cell.setBackgroundColor(BaseColor.WHITE);
-        cell.setPhrase(new Phrase("674", font));
-        table.addCell(cell);
-        return table;
+            pdfPCell = new PdfPCell(paragraph);
+            pdfPTable.addCell(applyStatementListHeaderStyle(pdfPCell,rowColor,Element.ALIGN_CENTER,Element.ALIGN_CENTER));
+        }
+        return pdfPTable;
+    }
+    
+    private static PdfPCell applyStatementListHeaderStyle(PdfPCell pdfPCell, BaseColor backgroundColor, int horizontalAlignment, int verticalAlignment){
+        pdfPCell.setUseAscender(true);
+        pdfPCell.setFixedHeight(18f);
+        pdfPCell.setPadding(5f);
+        pdfPCell.setBackgroundColor(backgroundColor);
+        pdfPCell.setHorizontalAlignment(horizontalAlignment);
+        pdfPCell.setVerticalAlignment(verticalAlignment);
+        return pdfPCell;
     }
 
     private PdfPTable getStatementSummary(){
@@ -402,19 +260,193 @@ public class HalfYearlyAccBlncStatementGenerator {
         statementSummaryTable.addCell(cell1);
         return statementSummaryTable;
     }
-
     private static void applyStatementSummaryCellStyle(PdfPCell cell) {
         cell.setBorder(15);
         cell.setBorderColor(new BaseColor(166, 166, 166));
         cell.setPaddingLeft(5.03f);
         cell.setPaddingRight(5.03f);
         cell.setPaddingTop(5.03f);
-        cell.setBottom(6.03f);
+        cell.setPaddingBottom(6.03f);
         cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
         
     }
 
+    private PdfPTable getRewardPointSummery(){
+        PdfPTable table = new PdfPTable(3);
+        PdfPTable mainTable = new PdfPTable(1);
+        PdfPTable outerTable = new PdfPTable(1);
+        table.setWidthPercentage(70);
+        try {
+            table.setWidths(new int[]{50,10,40});
+            mainTable.setWidths(new int[]{100});
+        } catch (DocumentException e) {
+            throw new RuntimeException(e);
+        }
+        table.setTotalWidth(400);
+        table.setLockedWidth(true);
 
+        mainTable.setTotalWidth(400);
+        mainTable.setLockedWidth(true);
+
+
+
+        PdfPCell cell = new PdfPCell();
+        cell.setPhrase(new Phrase("Reward Point for Ace No", font));
+        applyRewardPointSummeryCellStyle(cell,Element.ALIGN_LEFT,new BaseColor(242, 242, 242));
+        table.addCell(cell);
+
+        cell.setPhrase(new Phrase(":", font));
+        applyRewardPointSummeryCellStyle(cell,Element.ALIGN_RIGHT,new BaseColor(242, 242, 242));
+        table.addCell(cell);
+
+        cell.setPhrase(new Phrase("1501104881404001", font));
+        applyRewardPointSummeryCellStyle(cell,Element.ALIGN_CENTER,new BaseColor(242, 242, 242));
+        table.addCell(cell);
+
+        cell.setPhrase(new Phrase("Reward Points Earned in June 23", font));
+        applyRewardPointSummeryCellStyle(cell,Element.ALIGN_LEFT,BaseColor.WHITE);
+        table.addCell(cell);
+
+        cell.setPhrase(new Phrase(":", font));
+        applyRewardPointSummeryCellStyle(cell,Element.ALIGN_RIGHT,BaseColor.WHITE);
+        table.addCell(cell);
+
+        cell.setPhrase(new Phrase("10", font));
+        applyRewardPointSummeryCellStyle(cell,Element.ALIGN_CENTER,BaseColor.WHITE);
+        table.addCell(cell);
+
+        cell.setPhrase(new Phrase("Reward Points Redeemed in June 23", font));
+        applyRewardPointSummeryCellStyle(cell,Element.ALIGN_LEFT,new BaseColor(242, 242, 242));
+        table.addCell(cell);
+
+        cell.setPhrase(new Phrase(":", font));
+        applyRewardPointSummeryCellStyle(cell,Element.ALIGN_RIGHT,new BaseColor(242, 242, 242));
+        table.addCell(cell);
+
+        cell.setPhrase(new Phrase("0", font));
+        applyRewardPointSummeryCellStyle(cell,Element.ALIGN_CENTER,new BaseColor(242, 242, 242));
+        table.addCell(cell);
+
+        cell.setPhrase(new Phrase("Reward Points Expired in June 23", font));
+        applyRewardPointSummeryCellStyle(cell,Element.ALIGN_LEFT, BaseColor.WHITE);
+        table.addCell(cell);
+
+        cell.setPhrase(new Phrase(":", font));
+        applyRewardPointSummeryCellStyle(cell,Element.ALIGN_RIGHT,BaseColor.WHITE);
+        table.addCell(cell);
+
+        cell.setPhrase(new Phrase("75", font));
+        applyRewardPointSummeryCellStyle(cell,Element.ALIGN_CENTER,BaseColor.WHITE);
+        table.addCell(cell);
+
+        cell.setPhrase(new Phrase("Reward Points Available", font));
+        applyRewardPointSummeryCellStyle(cell,Element.ALIGN_LEFT,new BaseColor(242, 242, 242));
+        table.addCell(cell);
+
+        cell.setPhrase(new Phrase(":", font));
+        applyRewardPointSummeryCellStyle(cell,Element.ALIGN_RIGHT,new BaseColor(242, 242, 242));
+        table.addCell(cell);
+
+        cell.setPhrase(new Phrase("674", font));
+        applyRewardPointSummeryCellStyle(cell,Element.ALIGN_CENTER,new BaseColor(242, 242, 242));
+        table.addCell(cell);
+
+
+        PdfPCell mainTableTitleCell = new PdfPCell();
+        Paragraph rewardPointSummaryTitle = new Paragraph("Reward Point Summary",boldFont);
+        rewardPointSummaryTitle.setAlignment(Element.ALIGN_CENTER);
+        rewardPointSummaryTitle.setSpacingBefore(20f);
+        rewardPointSummaryTitle.setSpacingAfter(20f);
+        mainTableTitleCell.addElement(rewardPointSummaryTitle);
+        mainTableTitleCell.setBorder(Rectangle.NO_BORDER);
+        mainTable.addCell(mainTableTitleCell);
+
+        PdfPCell mainTableCell = new PdfPCell();
+        mainTableCell.addElement(table);
+        mainTableCell.setBorder(Rectangle.NO_BORDER);
+        mainTableCell.setVerticalAlignment(Element.ALIGN_CENTER);
+        mainTableCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        mainTableCell.setCellEvent(new DottedCell());
+        mainTableCell.setUseVariableBorders(true);
+        mainTable.addCell(mainTableCell);
+
+
+        PdfPCell outerTableCell = new PdfPCell();
+        outerTableCell.addElement(mainTable);
+        outerTableCell.setBorder(Rectangle.NO_BORDER);
+        outerTable.addCell(outerTableCell);
+        return outerTable;
+    }
+
+    private static void applyRewardPointSummeryCellStyle(PdfPCell cell, int horizontalAlignment, BaseColor color) {
+        cell.setPadding(6);
+        cell.setHorizontalAlignment(horizontalAlignment);
+        cell.setVerticalAlignment(Element.ALIGN_CENTER);
+        cell.setBorder(0);
+        cell.setBackgroundColor(color);
+
+    }
+    
+    private PdfPTable getCautionSection() throws DocumentException {
+        PdfPTable cautionSection = new PdfPTable(1);
+        cautionSection.setWidths(new int[]{100});
+        cautionSection.setTotalWidth(527);
+        cautionSection.setLockedWidth(true);
+        cautionSection.getDefaultCell().setFixedHeight(40);
+
+        PdfPCell pdfPCell0 = new PdfPCell();
+        pdfPCell0.setPaddingTop(10f); // Space before the cell
+        pdfPCell0.setPaddingBottom(15f);
+
+        Paragraph paragraph = new Paragraph("THANK YOU FOR BANKING WITH BRAC BANK LIMITED.", boldFont);
+        paragraph.setAlignment(Element.ALIGN_CENTER);
+
+        pdfPCell0.addElement(paragraph);
+
+        paragraph = new Paragraph("THIS IS A COMPUTER-GENERATED STATEMENT AND DOES NOT REQUIRE ANY SIGNATURE.", boldFont);
+        paragraph.setAlignment(Element.ALIGN_CENTER);
+        pdfPCell0.addElement(paragraph);
+
+        paragraph = new Paragraph("**** END OF STATEMENT ****", boldFont);
+        paragraph.setAlignment(Element.ALIGN_CENTER);
+        pdfPCell0.addElement(paragraph);
+
+        pdfPCell0.setBorder(Rectangle.BOX); // Set the border to a black box around the cell
+        pdfPCell0.setBorderColor(BaseColor.BLACK); // Set the border color to black
+        pdfPCell0.setBorderWidth(1f); // Set the border width
+
+        cautionSection.addCell(pdfPCell0);
+
+        //empty cell
+        PdfPCell emptyPCell1 = new PdfPCell();
+        emptyPCell1.setBorder(Rectangle.NO_BORDER);
+        paragraph = new Paragraph("\n\n");
+        emptyPCell1.addElement(paragraph);
+        cautionSection.addCell(emptyPCell1);
+
+        PdfPCell pdfPCell1 = new PdfPCell();
+        pdfPCell1.setPadding(10f); // Space before the cell
+        // Creating the first paragraph
+        paragraph = new Paragraph("You can purchase or transfer money through online/e-commerce by using your BRAC Bank card where card number, expiry date, three-digit CVV number and OTP received through SMS are required. Card PIN is not required to make online/ecommerce transaction.", font);
+        paragraph.setSpacingBefore(10f);
+        paragraph.setSpacingAfter(10f);
+        paragraph.setAlignment(Element.ALIGN_JUSTIFIED);
+        pdfPCell1.addElement(paragraph);
+        // Creating the second paragraph
+        paragraph = new Paragraph("For your convenience, local online gateway is always open. Please do not share card information (card number, card expiry date, CVV number, OTP, and PIN) to anybody, not even with bank official or call center agent.", font);
+        paragraph.setAlignment(Element.ALIGN_JUSTIFIED);
+        paragraph.setSpacingBefore(10f);
+        paragraph.setSpacingAfter(10f);
+        pdfPCell1.addElement(paragraph);
+        // Set the border color and width for the cell
+        pdfPCell1.setBorder(Rectangle.BOX); // Set the border to a black box around the cell
+        pdfPCell1.setBorderColor(BaseColor.BLACK); // Set the border color to black
+        pdfPCell1.setBorderWidth(1f); // Set the border width
+
+        cautionSection.addCell(pdfPCell1);
+
+        return cautionSection;
+    }
 
     private void encryptFile(PdfWriter writer) throws DocumentException {
         writer.setEncryption(statement.accountNumber.getBytes(), statement.accountNumber.getBytes(), PdfWriter.ALLOW_PRINTING, PdfWriter.ENCRYPTION_AES_128 | PdfWriter.DO_NOT_ENCRYPT_METADATA);
