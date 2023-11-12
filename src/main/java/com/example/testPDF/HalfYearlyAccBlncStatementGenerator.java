@@ -20,13 +20,10 @@ public class HalfYearlyAccBlncStatementGenerator {
     private BaseFont baseFont;
     private Font font;
     private Font boldFont;
-
     private Font fontSmall;
     private Font boldFontSmall;
     private Font boldFontUnderLiner;
-
     private HalfYearlyAccBalanceStatement statement;
-
     private boolean passwordProtectionEnabled;
     private String targetFilePath;
 
@@ -71,7 +68,7 @@ public class HalfYearlyAccBlncStatementGenerator {
 
         PdfPTable statementSummary = getStatementSummary();
         statementSummary.setSpacingBefore(10f);
-        statementSummary.setSpacingAfter(20f);
+        statementSummary.setSpacingAfter(10f);
         document.add(statementSummary);
 
         Paragraph statementTitle = new Paragraph("TRANSACTIONS OF 01-Jan-2023 TO 31-Jan-2023",boldFont);
@@ -80,11 +77,12 @@ public class HalfYearlyAccBlncStatementGenerator {
         document.add(statementTitle);
 
         PdfPTable statementList = this.getStatementList();
-        statementList.setSpacingBefore(20f);
+        statementList.setSpacingBefore(10f);
         document.add(statementList);
 
         PdfPTable rewardPointSummery = this.getRewardPointSummery();
-        rewardPointSummery.setSpacingAfter(20f);
+//        rewardPointSummery.setSpacingAfter(20f);
+        rewardPointSummery.setSpacingBefore(20f);
         document.add(rewardPointSummery);
 
         PdfPTable cautionSection = this.getCautionSection();
@@ -118,23 +116,31 @@ public class HalfYearlyAccBlncStatementGenerator {
     
     private PdfPTable getStatementList() throws DocumentException {
 
-        PdfPTable pdfPTable = new PdfPTable(4);
-        pdfPTable.setWidths(new int[]{25, 40, 10, 25});
+        PdfPTable pdfPTable = new PdfPTable(6);
+        pdfPTable.setWidths(new int[]{10,35, 10, 15, 15, 15});
         pdfPTable.setWidthPercentage(100);
 
-        Paragraph paragraph = new Paragraph("Account Number", boldFont);
+        Paragraph paragraph = new Paragraph("DATE", boldFont);
         PdfPCell pdfPCell = new PdfPCell(paragraph);
         pdfPTable.addCell(applyStatementListHeaderStyle(pdfPCell,BaseColor.WHITE,Element.ALIGN_CENTER,Element.ALIGN_CENTER));
 
-        paragraph = new Paragraph("Account Type", boldFont);
+        paragraph = new Paragraph("PARTICULARS", boldFont);
         pdfPCell = new PdfPCell(paragraph);
         pdfPTable.addCell(applyStatementListHeaderStyle(pdfPCell,BaseColor.WHITE,Element.ALIGN_CENTER,Element.ALIGN_CENTER));
 
-        paragraph = new Paragraph("Currency", boldFont);
+        paragraph = new Paragraph("CHQ.NO", boldFont);
         pdfPCell = new PdfPCell(paragraph);
         pdfPTable.addCell(applyStatementListHeaderStyle(pdfPCell,BaseColor.WHITE,Element.ALIGN_CENTER,Element.ALIGN_CENTER));
 
-        paragraph = new Paragraph("Balance", boldFont);
+        paragraph = new Paragraph("WITHDRAW", boldFont);
+        pdfPCell = new PdfPCell(paragraph);
+        pdfPTable.addCell(applyStatementListHeaderStyle(pdfPCell,BaseColor.WHITE,Element.ALIGN_CENTER,Element.ALIGN_CENTER));
+
+        paragraph = new Paragraph("DEPOSIT", boldFont);
+        pdfPCell = new PdfPCell(paragraph);
+        pdfPTable.addCell(applyStatementListHeaderStyle(pdfPCell,BaseColor.WHITE,Element.ALIGN_CENTER,Element.ALIGN_CENTER));
+
+        paragraph = new Paragraph("BALANCE", boldFont);
         pdfPCell = new PdfPCell(paragraph);
         pdfPTable.addCell(applyStatementListHeaderStyle(pdfPCell,BaseColor.WHITE,Element.ALIGN_CENTER,Element.ALIGN_CENTER));
 
@@ -151,6 +157,14 @@ public class HalfYearlyAccBlncStatementGenerator {
             pdfPTable.addCell(applyStatementListHeaderStyle(pdfPCell,rowColor,Element.ALIGN_CENTER,Element.ALIGN_CENTER));
 
             paragraph = new Paragraph(statement.schemeType, font);
+            pdfPCell = new PdfPCell(paragraph);
+            pdfPTable.addCell(applyStatementListHeaderStyle(pdfPCell,rowColor,Element.ALIGN_CENTER,Element.ALIGN_CENTER));
+
+            paragraph = new Paragraph(statement.accountCurrencyCode, font);
+            pdfPCell = new PdfPCell(paragraph);
+            pdfPTable.addCell(applyStatementListHeaderStyle(pdfPCell,rowColor,Element.ALIGN_CENTER,Element.ALIGN_CENTER));
+
+            paragraph = new Paragraph(statement.accountCurrencyCode, font);
             pdfPCell = new PdfPCell(paragraph);
             pdfPTable.addCell(applyStatementListHeaderStyle(pdfPCell,rowColor,Element.ALIGN_CENTER,Element.ALIGN_CENTER));
 
@@ -202,7 +216,7 @@ public class HalfYearlyAccBlncStatementGenerator {
         cell1.setHorizontalAlignment(PdfPCell.ALIGN_RIGHT);
         statementSummaryTable.addCell(cell1);
 
-        cell1 = new PdfPCell(new Paragraph("CUSTOMER ID",boldFontSmall));
+        cell1 = new PdfPCell(new Paragraph("ACCOUNT NUMBER",boldFontSmall));
         applyStatementSummaryCellStyle(cell1);
         cell1.setBackgroundColor(new BaseColor(242, 242, 242));
         statementSummaryTable.addCell(cell1);
@@ -211,7 +225,7 @@ public class HalfYearlyAccBlncStatementGenerator {
         applyStatementSummaryCellStyle(cell1);
         statementSummaryTable.addCell(cell1);
 
-        cell1 = new PdfPCell(new Paragraph("STATEMENT PERIOD",boldFontSmall));
+        cell1 = new PdfPCell(new Paragraph("OPENNING BALANCE",boldFontSmall));
         applyStatementSummaryCellStyle(cell1);
         cell1.setBackgroundColor(new BaseColor(242, 242, 242));
         statementSummaryTable.addCell(cell1);
@@ -221,7 +235,7 @@ public class HalfYearlyAccBlncStatementGenerator {
         cell1.setHorizontalAlignment(PdfPCell.ALIGN_RIGHT);
         statementSummaryTable.addCell(cell1);
 
-        cell1 = new PdfPCell(new Paragraph("CUSTOMER ID",boldFontSmall));
+        cell1 = new PdfPCell(new Paragraph("BRANCH NAME",boldFontSmall));
         applyStatementSummaryCellStyle(cell1);
         cell1.setBackgroundColor(new BaseColor(242, 242, 242));
         statementSummaryTable.addCell(cell1);
@@ -230,7 +244,7 @@ public class HalfYearlyAccBlncStatementGenerator {
         applyStatementSummaryCellStyle(cell1);
         statementSummaryTable.addCell(cell1);
 
-        cell1 = new PdfPCell(new Paragraph("STATEMENT PERIOD",boldFontSmall));
+        cell1 = new PdfPCell(new Paragraph("CLOSING BALANCE",boldFontSmall));
         applyStatementSummaryCellStyle(cell1);
         cell1.setBackgroundColor(new BaseColor(242, 242, 242));
         statementSummaryTable.addCell(cell1);
@@ -240,7 +254,7 @@ public class HalfYearlyAccBlncStatementGenerator {
         cell1.setHorizontalAlignment(PdfPCell.ALIGN_RIGHT);
         statementSummaryTable.addCell(cell1);
 
-        cell1 = new PdfPCell(new Paragraph("CUSTOMER ID",boldFontSmall));
+        cell1 = new PdfPCell(new Paragraph("ACCOUNT TYPE",boldFontSmall));
         applyStatementSummaryCellStyle(cell1);
         cell1.setBackgroundColor(new BaseColor(242, 242, 242));
         statementSummaryTable.addCell(cell1);
@@ -249,7 +263,7 @@ public class HalfYearlyAccBlncStatementGenerator {
         applyStatementSummaryCellStyle(cell1);
         statementSummaryTable.addCell(cell1);
 
-        cell1 = new PdfPCell(new Paragraph("STATEMENT PERIOD",boldFontSmall));
+        cell1 = new PdfPCell(new Paragraph("TOTAL WITHDRWAL",boldFontSmall));
         applyStatementSummaryCellStyle(cell1);
         cell1.setBackgroundColor(new BaseColor(242, 242, 242));
         statementSummaryTable.addCell(cell1);
@@ -258,6 +272,26 @@ public class HalfYearlyAccBlncStatementGenerator {
         applyStatementSummaryCellStyle(cell1);
         cell1.setHorizontalAlignment(PdfPCell.ALIGN_RIGHT);
         statementSummaryTable.addCell(cell1);
+
+        cell1 = new PdfPCell(new Paragraph("CURRENCY",boldFontSmall));
+        applyStatementSummaryCellStyle(cell1);
+        cell1.setBackgroundColor(new BaseColor(242, 242, 242));
+        statementSummaryTable.addCell(cell1);
+
+        cell1 = new PdfPCell(new Paragraph("04881404",fontSmall));
+        applyStatementSummaryCellStyle(cell1);
+        statementSummaryTable.addCell(cell1);
+
+        cell1 = new PdfPCell(new Paragraph("TOTAL DEPOSITS",boldFontSmall));
+        applyStatementSummaryCellStyle(cell1);
+        cell1.setBackgroundColor(new BaseColor(242, 242, 242));
+        statementSummaryTable.addCell(cell1);
+
+        cell1 = new PdfPCell(new Paragraph("29-Dec-2018 TO 12-Jan-2019",fontSmall));
+        applyStatementSummaryCellStyle(cell1);
+        cell1.setHorizontalAlignment(PdfPCell.ALIGN_RIGHT);
+        statementSummaryTable.addCell(cell1);
+
         return statementSummaryTable;
     }
     private static void applyStatementSummaryCellStyle(PdfPCell cell) {
@@ -355,8 +389,8 @@ public class HalfYearlyAccBlncStatementGenerator {
         PdfPCell mainTableTitleCell = new PdfPCell();
         Paragraph rewardPointSummaryTitle = new Paragraph("Reward Point Summary",boldFont);
         rewardPointSummaryTitle.setAlignment(Element.ALIGN_CENTER);
-        rewardPointSummaryTitle.setSpacingBefore(20f);
-        rewardPointSummaryTitle.setSpacingAfter(20f);
+//        rewardPointSummaryTitle.setSpacingBefore(40f);
+        rewardPointSummaryTitle.setSpacingAfter(10f);
         mainTableTitleCell.addElement(rewardPointSummaryTitle);
         mainTableTitleCell.setBorder(Rectangle.NO_BORDER);
         mainTable.addCell(mainTableTitleCell);

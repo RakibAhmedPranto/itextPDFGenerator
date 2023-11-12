@@ -18,6 +18,7 @@ public class BcCertificateEvent extends PdfPageEventHelper {
     public static Font font;
     public static Font font2;
     public static Font boldFont;
+    public static Font boldFont2;
     public Boolean isHardcopyRequired = false;
 
     HalfYearlyAccBalanceStatement statement;
@@ -35,6 +36,7 @@ public class BcCertificateEvent extends PdfPageEventHelper {
             font = new Font(baseFont, 10);
             font2 = new Font(baseFont, 9);
             boldFont = new Font(boldBaseFont, 10);
+            boldFont2 = new Font(boldBaseFont, 9);
 
         } catch (DocumentException | IOException e) {
             throw new RuntimeException(e);
@@ -76,9 +78,6 @@ public class BcCertificateEvent extends PdfPageEventHelper {
 //                Image logo = Image.getInstance("images/BBL.png");
 //                pdfPCell.addElement(logo);
 //            }
-//
-//            pdfPCell.setBorder(0);
-//            header.addCell(pdfPCell);
 
             Image logo = Image.getInstance(new ClassPathResource("images/BBL.png").getPath());
             pdfPCell.addElement(logo);
@@ -105,11 +104,34 @@ public class BcCertificateEvent extends PdfPageEventHelper {
                 header.addCell(pdfPCell);
 
                 PdfPTable pdfPTable = new PdfPTable(1);
-                addHeaderContent(pdfPTable, "Date: " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd-MMM-yyyy")), font);
-                addHeaderContent(pdfPTable, "Ref: Your Reference Number", font); // Change as required
-                addHeaderContent(pdfPTable, "Name: Customer Name", font); // Change as required
-                addHeaderContent(pdfPTable, "Address: Customer Address", font); // Change as required
-                addHeaderContent(pdfPTable, "Customer ID: 123456789", font); // Change as required
+
+                Chunk chunkTitle= new Chunk("Ref: ", boldFont);
+                Chunk chunkValue = new Chunk("123-ABC-456",font);
+
+                Phrase phrase = new Phrase();
+                phrase.add(chunkTitle);
+                phrase.add(chunkValue);
+
+                addHeaderContent(pdfPTable,phrase);
+
+                chunkTitle= new Chunk("ISSUE DATE: ", boldFont);
+                chunkValue = new Chunk(LocalDate.now().format(DateTimeFormatter.ofPattern("dd-MMM-yyyy")),font);
+                phrase = new Phrase();
+                phrase.add(chunkTitle);
+                phrase.add(chunkValue);
+                addHeaderContent(pdfPTable,phrase);
+
+                Paragraph customerTitle = new Paragraph(statement.customerTitle, boldFont);
+                PdfPCell customerTitleCell = new PdfPCell(customerTitle);
+                customerTitleCell.setPaddingTop(10f);
+                customerTitleCell.setPaddingBottom(10f);
+                customerTitleCell.setBorder(Rectangle.NO_BORDER);
+                pdfPTable.addCell(customerTitleCell);
+
+                Paragraph address = new Paragraph(statement.customerPermanentAddress, font);
+                PdfPCell customerAddress = new PdfPCell(address);
+                customerAddress.setBorder(Rectangle.NO_BORDER);
+                pdfPTable.addCell(customerAddress);
 
                 header.addCell(pdfPTable);
             }
@@ -141,27 +163,45 @@ public class BcCertificateEvent extends PdfPageEventHelper {
         table.addCell(pdfPCell);
     }
 
+    private void addHeaderContent(PdfPTable table, Phrase phrase) {
+        Paragraph paragraph = new Paragraph();
+        paragraph.add(phrase);
+        PdfPCell pdfPCell = new PdfPCell(paragraph);
+        pdfPCell.setBorder(Rectangle.NO_BORDER);
+        pdfPCell.setPaddingTop(5f);
+        table.addCell(pdfPCell);
+    }
+
     private void addFooter(PdfWriter writer) {
         try {
-            PdfPTable footer = new PdfPTable(1);
-            footer.setWidths(new int[]{100});
+            PdfPTable footer = new PdfPTable(2);
+            footer.setWidths(new int[]{50,50});
             footer.setTotalWidth(527);
             footer.setLockedWidth(true);
             footer.getDefaultCell().setFixedHeight(40);
 
             // Second Cell
+            PdfPCell pdfPCell1 = new PdfPCell();
+            pdfPCell1.setBorder(Rectangle.TOP);
+            pdfPCell1.setBorderColor(BaseColor.BLACK);
+            pdfPCell1.setPaddingTop(10f); // Space before the cell
+            pdfPCell1.setPaddingBottom(10f);
+
             PdfPCell pdfPCell2 = new PdfPCell();
             pdfPCell2.setBorder(Rectangle.TOP);
             pdfPCell2.setBorderColor(BaseColor.BLACK);
             pdfPCell2.setPaddingTop(10f); // Space before the cell
             pdfPCell2.setPaddingBottom(10f);
 
-            String pageString = "Page: " + writer.getCurrentPageNumber();
+            Paragraph paragraph1 = new Paragraph(statement.customerTitle,boldFont2);
+            paragraph1.setAlignment(Element.ALIGN_LEFT);
+            pdfPCell1.addElement(paragraph1);
+            footer.addCell(pdfPCell1);
 
-            Paragraph paragraph2 = new Paragraph(pageString);
+            String pageString = "Page: " + writer.getCurrentPageNumber();
+            Paragraph paragraph2 = new Paragraph(pageString,font2);
             paragraph2.setAlignment(Element.ALIGN_RIGHT);
             pdfPCell2.addElement(paragraph2);
-
             footer.addCell(pdfPCell2);
 
             PdfContentByte canvas = writer.getDirectContent();
